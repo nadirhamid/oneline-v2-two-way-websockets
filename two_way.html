@@ -1,0 +1,108 @@
+<!DOCTYPE HTML>
+ <html>
+   <head>
+   	 <title>Two Way Steaming in Oneline V2</title>      
+   </head>
+   <body>
+      <style>
+	 .div {
+		width: 100%;
+		height: 100%;
+	 }
+	 .large-button {
+		font-size: 24px
+		font-weight:700;
+	  }
+	 #twoWayForm {
+		border: 1px solid #E3E3E3;
+		padding: 20px;
+	 }
+	 .form-field {
+		border: 1px solid #E3E3E3;
+		font-size: 13px;
+	  }
+	  #sendMessage {
+		font-size: 14px;
+	   }
+	  #consoleLog {
+		width: 100%;
+		min-height: 700px;
+	  }
+	 </style>
+		
+ 
+	
+      <div class="div">
+	<button class="large-button" id="startTwoWay">Start Two Way Streaming</button>
+	<button class="large-button" id="endTwoWay">End Two Way Streaming</button>
+	<form id="twoWayForm">
+		<div class="field">
+			<label>To</label>
+	  	        <input class="form-field" type="text" id="messageTo"></input>
+		</div>
+		<div class="field">
+			<label>Message</label>
+			<textarea  class="form-field" id="messageBody"></textarea>
+		</div>
+		<button id="sendMessage">Send Message</button>
+	 </form>
+  	 <textarea id="consoleLog"></textarea>
+	</div>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.4.js"></script>
+        <script>
+	   jQuery( document ).ready(function() {
+			var connection = new WebSocket("ws://"+document.location.host+":9000/two_way");
+			var log = function(msg) {
+				var log = jQuery("#consoleLog");
+				jQuery(log).val(jQuery(log).val()+"\r\n"+ msg);
+				jQuery(log).scrollTop( jQuery(log).scrollHeight );
+			};
+			var showAllNotifications = function(notifications) {	
+				for ( var i in notifications ) {
+					log ("Notification Received " + JSON.stringify( notifications[i] ) );
+					}
+			};
+			
+			connection.onopen = function( evt ) {
+				 log ( "Connecting to two way .. "); 
+			   };
+			connection.onclose = function( evt ) {
+				log ("Closing two way .. ");
+			   };
+			connection.onmessage = function( evt ) {
+				var message = JSON.parse( evt.data );
+				if ( message.status === "OK" && message.data ) {
+					showAllNotifications( message.data );
+				} 
+				if ( message.status === "OK" ) {
+					log("Message " + message.type + " OK");
+				}
+			 };
+			jQuery("#startTwoWay").click(function() {
+				connection.send( JSON.stringify({
+					"type": "STARTED"
+				}));
+			  });
+			jQuery("#endTwoWay").click(function() {
+				connection.send( JSON.stringify({
+					"type": "STOPPED"}));
+			  });
+			jQuery("#sendMessage").click(function() {
+				connection.send( JSON.stringify({
+					"type": "MESSAGE",
+					"to": jQuery("#messageTo").val(),
+					"message": jQuery("#messageBody").val()
+					}));
+			});
+				
+	    });
+        </script>
+   </body>
+  </html>
+		   	 
+			
+		
+	
+	  
+
+
